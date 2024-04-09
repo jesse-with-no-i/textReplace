@@ -46,7 +46,11 @@ class Replacer:
 
         # input validation: making sure the input file is a text file
         if infile[-4:] != ".txt":
-            raise FileFormatError("Error: File is not a .txt file.")
+            raise FileFormatError("Error: Input file is not a .txt file.")
+
+        # input validation: make sure the output file is also a text file
+        if outfile[-4:] != ".txt":
+            raise FileFormatError("Error: Output file is not a .txt file.")
 
     # adds a new Replacement object to the replacements list
     def add_replacement(self, rString, wString):
