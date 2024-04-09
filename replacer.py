@@ -30,3 +30,15 @@ class Replacer:
         self.outfile = outfile
         self.outputString = ""
 
+    # adds a new Replacement object to the replacements list
+    def add_replacement(self, rString, wString):
+        self.replacements.append(Replacement(rString, wString))
+
+    # performs the replacement operation
+    def replace_text(self):
+
+        with open(self.infile, "r") as infile:
+            self.outputString = infile.read()
+
+        with open(self.outfile, "w") as outfile:
+            outfile.write(self.outputString)

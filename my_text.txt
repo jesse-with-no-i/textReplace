@@ -1,0 +1,7 @@
+A pushdown automaton is a 6 tuple P = (Q, SIGMA, GAMMA, DELTA, q0, F) where:
+Q is a finite set of states
+SIGMA is the input alphabet
+GAMMA is the stack alphabet
+q0 ELEMENT_OF Q is the specially designated start state
+F SUBSET_OF Q is the set of accept states
+DELTA is the transition relation
