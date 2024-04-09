@@ -2,6 +2,8 @@ from replacer import Replacer
 
 
 def main():
+    # BEGIN BLACK BOX TEST
+
     newReplacer = Replacer(infile="my_text.txt")
 
     newReplacer.add_replacement("SIGMA", "Σ")
@@ -11,6 +13,8 @@ def main():
     newReplacer.add_replacement("SUBSET_OF", "⊆")
 
     newReplacer.replace_text()
+
+    # END BLACK BOX TEST
 
 
 if __name__ == '__main__':
