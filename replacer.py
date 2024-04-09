@@ -4,6 +4,10 @@
 class SubstringError(Exception):
     pass
 
+# custom error for when the file is not a text file
+class FileFormatError(Exception):
+    pass
+
 # this class has two attributes, readString and writeString. readString contains the string that will be the input
 # of our find() function when looking at the text. writeString will be what we replace the readString with in our
 # output text
@@ -40,6 +44,10 @@ class Replacer:
         self.outfile = outfile
         self.outputString = ""
 
+        # input validation: making sure the input file is a text file
+        if infile[-4:] != ".txt":
+            raise FileFormatError("Error: File is not a .txt file.")
+
     # adds a new Replacement object to the replacements list
     def add_replacement(self, rString, wString):
 
@@ -48,9 +56,13 @@ class Replacer:
     # performs the replacement operation
     def replace_text(self):
 
-        # saves the text from the input file to the outputString initially
-        with open(self.infile, "r") as infile:
-            self.outputString = infile.read()
+        try:
+            # saves the text from the input file to the outputString initially
+            with open(self.infile, "r") as infile:
+                self.outputString = infile.read()
+        except FileNotFoundError:
+            print("Error: File does not exist")
+
 
         # begin iterating through the string for each replacement
         for r in self.replacements:
