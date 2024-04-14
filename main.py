@@ -1,6 +1,18 @@
+import sys
+
+from guiApp import mainWindow
+from PyQt5.QtWidgets import QApplication
 from replacer import Replacer
 import consoleApp
 
+
+def runGuiApp():
+    app = QApplication(sys.argv)
+    # create a window
+    window = mainWindow()
+    window.show()
+    # configure window exit function
+    sys.exit(app.exec_())
 
 def main():
     # BEGIN BLACK BOX TEST
@@ -17,7 +29,12 @@ def main():
 
     # END BLACK BOX TEST
 
-    consoleApp.run()
+    # uncomment for console application
+    # consoleApp.run()
+
+    # uncomment for GUI application
+    runGuiApp()
+
 
 if __name__ == '__main__':
     main()
