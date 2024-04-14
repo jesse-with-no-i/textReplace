@@ -1,6 +1,6 @@
 import sys
 
-from guiApp import mainWindow
+from guiApp import MainWindow
 from PyQt5.QtWidgets import QApplication
 from replacer import Replacer
 import consoleApp
@@ -9,7 +9,7 @@ import consoleApp
 def runGuiApp():
     app = QApplication(sys.argv)
     # create a window
-    window = mainWindow()
+    window = MainWindow()
     window.show()
     # configure window exit function
     sys.exit(app.exec_())

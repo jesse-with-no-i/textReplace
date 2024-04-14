@@ -1,14 +1,52 @@
 from PyQt5.QtWidgets import *
 from PyQt5.QtCore import Qt
 from PyQt5.QtCore import pyqtSignal
+from replacer import Replacer
 import sys
 
 
+# have a singleton class that has the attributes files and a list of replacers
+# when the go button is pressed, signal the singleton to get all the data from each of the classes
+# then call the execute function with files and replacers as the arguments
+class WindowData:
+    _instance = None
+
+    def __init__(self):
+        # Private constructor to prevent instantiation from outside
+        if WindowData._instance is not None:
+            raise Exception("This class is a singleton. Use WindowData.getInstance() to get an instance.")
+        else:
+            # Initialize attributes
+            self.files = []
+            self.replacers = []
+
+    @staticmethod
+    def getInstance():
+        if WindowData._instance is None:
+            WindowData._instance = WindowData()
+        return WindowData._instance
+
+    def get_files(self):
+        return self.files
+
+    def get_replacers(self):
+        return self.replacers
+
+    def set_files(self, files):
+        self.files = files
+
+    def add_replacer(self, replacer):
+        self.replacers.append(replacer)
+
+
 # create a main window class
-class mainWindow(QMainWindow):
+class MainWindow(QMainWindow):
 
     def __init__(self):
         super().__init__()
+
+        # list containing all the files the user wants to edit
+        self.files = []
 
         # configure the window
         self.setGeometry(200, 200, 1600, 1200)
@@ -39,6 +77,7 @@ class mainWindow(QMainWindow):
 class FileDropArea(QFrame):
     def __init__(self):
         super().__init__()
+        self.files = []
 
         # allow files to be dragged and dropped
         self.setAcceptDrops(True)
@@ -55,12 +94,12 @@ class FileDropArea(QFrame):
         layout.addWidget(self.fileIconLabel)
 
         # add a label to drag files there
-        self.dragFileLabel = QLabel("Drag text file here or...")
+        self.dragFileLabel = QLabel("Drag text files here or...")
         self.dragFileLabel.setStyleSheet("font-size: 40px; font-family: Verdana; text-align: left; border: none;")
         layout.addWidget(self.dragFileLabel)
 
         # add button to select file
-        self.selectFileButton = QPushButton("...click to select file")
+        self.selectFileButton = QPushButton("...click to browse files")
         self.selectFileButton.setStyleSheet("background-color: transparent; font-size: 40px; font-family: Verdana;"
                                             "text-align: right; border: none; color: blue;")
         self.selectFileButton.clicked.connect(self.open_file_dialog)
@@ -85,9 +124,22 @@ class FileDropArea(QFrame):
         if files:
             self.process_files(files)
 
-    def process_file(self, files):
-        # Process the list of files here
-        print("Selected files:", files)
+    def process_files(self, files):
+        # make sure each file is a text file
+        for file in files:
+
+            # if the file is not a text file, reject it and show a messagebox
+            if file[-4:] != ".txt":
+                message_box = QMessageBox()
+                message_box.setWindowTitle("Wrong file type")
+                message_box.setText("Some of your files are not formatted with '.txt'")
+                message_box.setIcon(QMessageBox.Information)
+                message_box.setStandardButtons(QMessageBox.Ok)
+                message_box.exec_()
+                return
+
+        # otherwise, store the files in a list to be operated on later
+        WindowData.getInstance().set_files(files)
 
 
 # create a class for the frame where the user enters the replacement to make
@@ -112,8 +164,8 @@ class ReplacementFrame(QFrame):
         self.findLabel = QLabel("Find:")
         self.findLabel.setStyleSheet("font-size: 40px; font-family: Verdana; text-align: left; border: none;")
 
-        # create a label "Replace with"
-        self.replaceLabel = QLabel("Replace with:")
+        # create a label "Replace "
+        self.replaceLabel = QLabel("Replace:")
         self.replaceLabel.setStyleSheet("font-size: 40px; font-family: Verdana; text-align: right; border: none;")
 
         self.gridLayout.addWidget(self.findLabel, 0, 0)
@@ -131,6 +183,13 @@ class ReplacementFrame(QFrame):
 
         # add the initial first row
         self.add_row()
+
+        # button at the bottom that performs the replacements based on the text and files the user entered
+        self.goButton = QPushButton("Go")
+        self.goButton.clicked.connect(self.press_go)
+        # format the button
+        self.goButton.setStyleSheet("   background-color: #A4C639; font-family: Verdana; font-size: 40px;")
+        self.gridLayout.addWidget(self.goButton, self.maxRows, 1)
 
     # function to add placeholder rows. Used to create a grid that is filled up by default
     def add_placeholder_row(self, row):
@@ -201,5 +260,37 @@ class ReplacementFrame(QFrame):
         # fix the positions of the + and x
         self.gridLayout.addWidget(self.addRowButton, row, 1)
         self.gridLayout.addWidget(self.deleteRowButton, row, 0)
+
+
+    # function for when the "go" button is pressed:
+    def press_go(self):
+        # get an instance of the singleton class to store the data in
+        windowInstance = WindowData.getInstance()
+
+        # check if the user has selected any files yet
+        if windowInstance.get_files() == []:
+            return
+
+        # since there are multiple files, we need to do this operation for every file in files
+        for file in windowInstance.get_files():
+            print(file)
+            newFileName = file.split("\\")[-1][:-4] + "_replaced.txt"
+
+            # make a new replacer object for this file
+            newReplacer = Replacer(file, newFileName)
+
+            # extract the contents from each of the rows
+            for row in range(self.numRows):
+                leftWidget = self.gridLayout.itemAtPosition(row+1, 0).widget().text()
+                leftText = leftWidget.text()
+
+        #
+        # # finally execute the replacement queries
+        # for replacer in windowInstance.get_replacers():
+        #     replacer.replace_text()
+
+
+
+
 
 
