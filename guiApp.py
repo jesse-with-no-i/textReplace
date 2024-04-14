@@ -166,25 +166,40 @@ class ReplacementFrame(QFrame):
             self.gridLayout.addWidget(replaceLineEdit, row, 1)
 
             # add the "add row button" and "delete row button"
-            self.gridLayout.addWidget(self.addRowButton, row+1, 1)
-            self.gridLayout.addWidget(self.deleteRowButton, row + 1, 0)
+            self.place_add_delete_buttons(row+1)
 
             self.numRows += 1
-
 
     # function to delete a row
     def delete_row(self):
         # make sure user can't delete the first row
-        if self.numRows > 2:
+        if self.numRows <= 2:
+            return
 
-            # replace the last row with a placeholder row
-            self.add_placeholder_row(self.numRows-1)
+        # replace the last row with a placeholder row
+        self.add_placeholder_row(self.numRows)
+        self.add_placeholder_row(self.numRows-1)
 
-            # bookkeeping
-            self.numRows = self.numRows - 1
+        # bookkeeping
+        self.numRows -= 1
 
-            # fix the positions of the + and x
-            self.gridLayout.addWidget(self.addRowButton, self.numRows, 1)
-            self.gridLayout.addWidget(self.deleteRowButton, self.numRows, 0)
+        # replace add and delete buttons
+        self.place_add_delete_buttons(self.numRows)
 
-            print(self.numRows)
+# function to place or replace the add and delete buttons
+    def place_add_delete_buttons(self, row):
+        # button to add a row
+        self.addRowButton = QPushButton("➕")
+        self.addRowButton.setStyleSheet("font-size: 40px; text-align: right; border: none")
+        self.addRowButton.clicked.connect(self.add_row)
+
+        # button to delete a row
+        self.deleteRowButton = QPushButton("❌")
+        self.deleteRowButton.setStyleSheet("font-size: 40px; text-align: left; border: none")
+        self.deleteRowButton.clicked.connect(self.delete_row)
+
+        # fix the positions of the + and x
+        self.gridLayout.addWidget(self.addRowButton, row, 1)
+        self.gridLayout.addWidget(self.deleteRowButton, row, 0)
+
+
