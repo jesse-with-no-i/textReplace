@@ -79,6 +79,10 @@ class FileDropArea(QFrame):
         super().__init__()
         self.files = []
 
+        # label for what files have been selected
+        self.fileLabel = QLabel("No Files Selected.")
+        self.fileLabel.setStyleSheet("border: none; font-family: Verdana;")
+
         # allow files to be dragged and dropped
         self.setAcceptDrops(True)
 
@@ -105,6 +109,9 @@ class FileDropArea(QFrame):
         self.selectFileButton.clicked.connect(self.open_file_dialog)
         layout.addWidget(self.selectFileButton)
 
+        # add the label for selected files
+        layout.addWidget(self.fileLabel)
+
     # this function handles the drag functionality
     def drag_enter_event(self, event):
         if event.mimeData().hasUrls():
@@ -125,20 +132,45 @@ class FileDropArea(QFrame):
             self.process_files(files)
 
     def process_files(self, files):
+        # flag for all the files being the right type
+        incorrectFormat = False
+
         # make sure each file is a text file
         for file in files:
 
             # if the file is not a text file, reject it and show a messagebox
             if file[-4:] != ".txt":
-                message_box = QMessageBox()
-                message_box.setWindowTitle("Wrong file type")
-                message_box.setText("Some of your files are not formatted with '.txt'")
-                message_box.setIcon(QMessageBox.Information)
-                message_box.setStandardButtons(QMessageBox.Ok)
-                message_box.exec_()
-                return
+                # change flag to show that some files were rejected because they were the wrong type
+                incorrectFormat = True
 
-        # otherwise, store the files in a list to be operated on later
+                # remove the non-text file from files
+                files.remove(file)
+
+        if incorrectFormat:
+            message_box = QMessageBox()
+            message_box.setWindowTitle("Wrong file type")
+            message_box.setText("Some of your files are not formatted with '.txt' and will not be included")
+            message_box.setIcon(QMessageBox.Information)
+            message_box.setStandardButtons(QMessageBox.Ok)
+            message_box.exec_()
+
+        # display the selected files on the screen
+        fileNames = "Files selected:\n"
+
+        for file in files:
+            # add the file to the filenames string
+            fileName = file.split('/')[-1]
+
+            # if the filename is too long, only display part of it:
+            if len(fileName) > 35:
+                fileName = fileName[0:33] + " ..."
+
+            fileNames = fileNames + fileName + '\n'
+
+        # update the label that shows the selected files
+        self.fileLabel.setText(fileNames)
+
+        # add the files to the window data instance to be used later on
         WindowData.getInstance().set_files(files)
 
 
@@ -148,6 +180,9 @@ class ReplacementFrame(QFrame):
         super().__init__()
 
         self.numRows = 1
+
+        # list of all find-replace line edit objects
+        self.findLineEditObjects = []
 
         # set to a grid layout
         self.gridLayout = QGridLayout()
@@ -220,6 +255,11 @@ class ReplacementFrame(QFrame):
             replaceLineEdit.setStyleSheet("background-color: white; font-size: 30px; font-family: Verdana; "
                                           "height: 70px;")
 
+            # add a new list to the findLineEditObjects list that contains both the findLineEdit
+            # and replaceLineEdit objects
+            findReplacePair = [findLineEdit, replaceLineEdit]
+            self.findLineEditObjects.append(findReplacePair)
+
             # add the widgets
             self.gridLayout.addWidget(findLineEdit, row, 0)
             self.gridLayout.addWidget(replaceLineEdit, row, 1)
@@ -245,6 +285,9 @@ class ReplacementFrame(QFrame):
         # replace add and delete buttons
         self.place_add_delete_buttons(self.numRows)
 
+        # delete the pair from the findLineEditObjects list
+        self.findLineEditObjects.pop()
+
 # function to place or replace the add and delete buttons
     def place_add_delete_buttons(self, row):
         # button to add a row
@@ -267,30 +310,49 @@ class ReplacementFrame(QFrame):
         # get an instance of the singleton class to store the data in
         windowInstance = WindowData.getInstance()
 
+        # get the contents of all the replacement by extracting the text from the line edits
+        replacementsList = []
+
+        for pair in self.findLineEditObjects:
+            findText = pair[0].text()
+            replaceText = pair[1].text()
+
+            # either one is blank, don't add it to the list
+            if findText == "" or replaceText == "":
+                continue
+
+            replacementsList.append([findText, replaceText])
+
         # check if the user has selected any files yet
         if windowInstance.get_files() == []:
             return
 
         # since there are multiple files, we need to do this operation for every file in files
         for file in windowInstance.get_files():
-            print(file)
+
+            # create a new replacer object with the current file and a new file which extends the current file
             newFileName = file.split("\\")[-1][:-4] + "_replaced.txt"
+            replacer = Replacer(file, newFileName)
 
-            # make a new replacer object for this file
-            newReplacer = Replacer(file, newFileName)
+            # add each replacement to the new replacer
+            for replacement in replacementsList:
+                replacer.add_replacement(replacement[0], replacement[1])
 
-            # extract the contents from each of the rows
-            for row in range(self.numRows):
-                leftWidget = self.gridLayout.itemAtPosition(row+1, 0).widget().text()
-                leftText = leftWidget.text()
+            replacer.replace_text()
 
-        #
-        # # finally execute the replacement queries
-        # for replacer in windowInstance.get_replacers():
-        #     replacer.replace_text()
+        # notify the user that the process is complete and exit the app.
+        message_box = QMessageBox()
+        message_box.setWindowTitle("Process Complete")
+        message_box.setText("The process is complete and the app will now close.")
+        message_box.setIcon(QMessageBox.Information)
+        message_box.setStandardButtons(QMessageBox.Ok)
 
+        # make it so that the message box closes the application when you press ok
+        ok_button = message_box.button(QMessageBox.Ok)
+        ok_button.clicked.connect(self.close_application)
 
+        message_box.exec_()
 
-
-
-
+    def close_application(self):
+        # Close the application
+        QApplication.instance().quit()
